@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Laura's Goals</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: "Poppins", sans-serif;
+    background: #000000;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header */
+header {
+    background: black;
+    padding: 18px;
+    text-align: center;
+    border-bottom: 2px solid #ff003c;
+}
+header a {
+    font-size: 18px;
+    margin: 0 20px;
+    color: #ff003c;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+header a:hover {
+    color: cyan;
+}
+
+/* Container */
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+/* Button styles */
+input, select {
+    width: 75%;
+    padding: 12px;
+    border: none;
+    margin-bottom: 10px;
+    outline: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 14px;
+    border: 1px solid #ff003c;
+    border-radius: 6px;
+}
+
+button {
+    padding: 12px 18px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 5px;
+    background: #ff003c;
+    color: white;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+button:hover {
+    background: cyan;
+    color: black;
+}
+
+/* Goal styling */
+.goal {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    border-left: 4px solid #ff003c;
+    margin-top: 10px;
+    border-radius: 8px;
+    animation: fadeIn 0.4s ease;
+}
+.status {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+.todo { background: #ff003c; }
+.progress { background: #ffea00; color: black; }
+.done { background: #00ff95; color: black; }
+
+/* Buttons inside card */
+.card-btn {
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid #ff003c;
+    margin-top: 8px;
+}
+.card-btn:hover {
+    background: #ff003c;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(5px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* Confetti */
+.confetti {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: cyan;
+    animation: fall 1s linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a href="index.html">Home</a>
+    <a href="quotes.html">Quotes</a>
+    <a href="goals.html" style="color:cyan;">Goals ✨</a>
+</header>
+
+<div class="container">
+    <h2>Laura's Journey Goals 🚀</h2>
+    <input type="text" id="goalInput" placeholder="Enter a new goal...">
+    
+    <button onclick="addGoal()">Add Goal</button>
+    
+    <div id="goalsList"></div>
+</div>
+
+<script>
+let goals = JSON.parse(localStorage.getItem("goals") || "[]");
+let editingIndex = -1;
+
+function saveGoals() {
+    localStorage.setItem("goals", JSON.stringify(goals));
+}
+
+function addGoal() {
+    const text = document.getElementById("goalInput").value.trim();
+    if (!text) return;
+    
+    if (editingIndex >= 0) {
+        goals[editingIndex].text = text;
+        editingIndex = -1;
+    } else {
+        goals.push({ text, status: "todo" });
+    }
+
+    document.getElementById("goalInput").value = "";
+    saveGoals();
+    renderGoals();
+}
+
+function editGoal(index) {
+    editingIndex = index;
+    document.getElementById("goalInput").value = goals[index].text;
+}
+
+function deleteGoal(index) {
+    goals.splice(index, 1);
+    saveGoals();
+    renderGoals();
+}
+
+function changeStatus(index, newStatus) {
+    const previous = goals[index].status;
+    goals[index].status = newStatus;
+
+    saveGoals();
+    renderGoals();
+
+    if (newStatus === "done" && previous !== "done") {
+        launchConfetti();
+    }
+}
+
+function renderGoals() {
+    const container = document.getElementById("goalsList");
+    container.innerHTML = "";
+
+    goals.forEach((goal, index) => {
+        const div = document.createElement("div");
+        div.className = "goal";
+
+        const statusClass = goal.status === "done" ? "done" :
+                            goal.status === "progress" ? "progress" : "todo";
+        const statusText = goal.status === "done" ? "✅ Finished" :
+                           goal.status === "progress" ? "⏳ In Progress" :
+                           "📌 To Do";
+
+        div.innerHTML = `
+            <span class="status ${statusClass}">${statusText}</span>
+            <p>${goal.text}</p>
+            <button class="card-btn" onclick="changeStatus(${index}, 'todo')">To-Do</button>
+            <button class="card-btn" onclick="changeStatus(${index}, 'progress')">In-Progress</button>
+            <button class="card-btn" onclick="changeStatus(${index}, 'done')">Finished</button>
+            <br>
+            <button class="card-btn" onclick="editGoal(${index})">Edit</button>
+            <button class="card-btn" onclick="deleteGoal(${index})">Delete</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Confetti animation
+function launchConfetti() {
+    for (let i = 0; i < 50; i++) {
+        let c = document.createElement("div");
+        c.className = "confetti";
+        c.style.left = Math.random() * window.innerWidth + "px";
+        c.style.background = Math.random() > 0.5 ? "cyan" : "#ff003c";
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 1000);
+    }
+}
+
+renderGoals();
+</script>
+
+</body>
+</html>
